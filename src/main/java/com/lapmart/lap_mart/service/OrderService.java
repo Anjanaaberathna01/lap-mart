@@ -61,4 +61,17 @@ public class OrderService {
         cartRepository.deleteAll(cartItems); // Clear the cart
         return orderRepository.save(order);
     }
+    public Order updateOrderStatus(Long orderId, String status) {
+        // Now this can correctly access the non-static orderRepository
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+        order.setStatus(status);
+        return orderRepository.save(order);
+    }
+
+    // 2. REMOVED 'static' keyword here
+    public void deleteOrder(Long orderId) {
+        orderRepository.deleteById(orderId);
+    }
+
 }
