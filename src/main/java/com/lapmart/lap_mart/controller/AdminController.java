@@ -8,7 +8,13 @@ import com.lapmart.lap_mart.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
+import java.nio.file.StandardCopyOption;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -49,10 +55,32 @@ public class AdminController {
         return productRepository.save(product);
     }
 
-    @DeleteMapping("/products/{id}")
+    @GetMapping("/delete/{id}")
     public String deleteProduct(@PathVariable Long id) {
-        productRepository.deleteById(id);
-        return "Product deleted successfully";
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        // 1. Delete the physical files from the 'uploads' folder
+        deletePhysicalFile(product.getImageUrl1());
+        deletePhysicalFile(product.getImageUrl2());
+        deletePhysicalFile(product.getImageUrl3());
+
+        // 2. Delete the record from the database
+        productRepository.delete(product);
+
+        return "redirect:/admin/products";
+    }
+
+    private void deletePhysicalFile(String relativePath) {
+        if (relativePath != null && !relativePath.isEmpty()) {
+            try {
+                // Convert the web path (/uploads/...) back to a full system path
+                Path filePath = Paths.get(System.getProperty("user.dir") + "/src/main/resources/static" + relativePath);
+                Files.deleteIfExists(filePath);
+            } catch (IOException e) {
+                System.err.println("Could not delete file: " + relativePath);
+            }
+        }
     }
 
     // --- ORDER MANAGEMENT ---

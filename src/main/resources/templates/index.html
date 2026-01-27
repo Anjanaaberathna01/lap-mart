@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Lap Mart - Home</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="container mt-5">
+<h2 class="text-center mb-4">Available Laptops at Lap Mart</h2>
+
+<table class="table table-striped table-bordered">
+    <thead class="table-dark">
+    <tr>
+        <th>Brand</th>
+        <th>Model</th>
+        <th>Price</th>
+        <th>Stock</th>
+        <th>Images</th>
+        <th>Action</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="laptop : ${laptops}">
+        <td th:text="${laptop.brand}">Brand</td>
+        <td th:text="${laptop.modelName}">Model</td>
+        <td th:text="${'Rs' + laptop.price}">Price</td>
+        <td th:text="${laptop.stockQuantity}">Stock</td>
+        <td>
+            <img th:src="@{${laptop.imageUrl1}}" width="100" class="img-thumbnail" />
+        </td>
+        <td>
+            <a th:href="@{/cart/add/{id}(id=${laptop.id})}" class="btn btn-primary btn-sm">Add to Cart</a>
+        </td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

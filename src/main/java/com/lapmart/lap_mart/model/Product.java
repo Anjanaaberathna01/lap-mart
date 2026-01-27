@@ -28,5 +28,8 @@ public class Product {
     @Min(value = 0, message = "Price must be non-negative")
     private double price;
     private Integer stockQuantity;
+    private String imageUrl1;
+    private String imageUrl2;
+    private String imageUrl3;
 
 }

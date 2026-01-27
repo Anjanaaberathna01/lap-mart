@@ -1,27 +1,23 @@
-server:
-  port: 8080
-
+debug: true
 spring:
-  application:
-    name: lap-mart
-
   datasource:
-    url: jdbc:h2:mem:lap-mart_db
-    driver-class-name: org.h2.Driver
-    username: sa
+    url: jdbc:mysql://localhost:3306/lapmart_db?useSSL=false&serverTimezone=UTC
+    username: root
     password:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    servlet:
+      multipart:
+        max-file-size: 5MB
+        max-request-size: 5MB
 
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
 
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: update
     show-sql: true
     properties:
       hibernate:
-        format_sql: true
-        debug: true
+        dialect: org.hibernate.dialect.MySQLDialect
+server:
+    port: 8081
+
