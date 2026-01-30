@@ -6,6 +6,7 @@ import com.lapmart.lap_mart.repository.OrderRepository;
 import com.lapmart.lap_mart.repository.ProductRepository;
 import com.lapmart.lap_mart.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -33,10 +34,10 @@ public class AdminController {
     // --- PRODUCT MANAGEMENT ---
 
     @GetMapping("/products")
-    public List<Product> getAllProducts() {
-        return productRepository.findAll();
+    public String adminProductsPage(Model model) {
+        model.addAttribute("laptops", productRepository.findAll());
+        return "admin-products"; // Looks for admin-products.html
     }
-
     @PostMapping("/products")
     public Product addProduct(@RequestBody Product product) {
         return productRepository.save(product);

@@ -1,9 +1,8 @@
 package com.lapmart.lap_mart.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -11,7 +10,9 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
-public class SecurityConfig{
+public class SecurityConfig {
+    @Autowired
+    private CustomAuthenticationSuccessHandler successHandler;
 
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
@@ -21,37 +22,39 @@ public class SecurityConfig{
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Keep disabled for now to simplify development
+                .csrf(csrf -> csrf.disable()) // Keep disabled for Postman testing
                 .authorizeHttpRequests(auth -> auth
-                        // 0. Allow access to your new Web/Thymeleaf routes
-                        .requestMatchers("/", "/products/**", "/api/auth/**", "/h2-console/**").permitAll()
+                        // 1. PUBLIC ASSETS & AUTHENTICATION
+                        // We permit these so that the login page can actually load without redirecting to itself
+                        .requestMatchers("/", "/login", "/register/**", "/api/auth/**", "/uploads/**", "/css/**", "/js/**").permitAll()
+                        .requestMatchers("/h2-console/**").permitAll()
 
-                        // 1. Protect Admin Product Management routes
-                        .requestMatchers("/admin/products/**").hasRole("ADMIN")
+                        // 2. ADMIN ONLY
+                        // Ensure your DB 'role' column values are exactly "ROLE_ADMIN"
+                        .requestMatchers("/admin/**", "/api/admin/**").hasAuthority("ROLE_ADMIN")
 
-                        // 2. Protect Admin web and API routes
-                        .requestMatchers("/admin/**", "/api/admin/**").hasRole("ADMIN")
+                        // 3. LOGGED-IN USERS (Products/Cart/etc)
+                        .requestMatchers("/products/**").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN")
 
-                        // 3. Any other request (like Cart or Orders) requires login
+                        // 4. CATCH-ALL
                         .anyRequest().authenticated()
                 )
-                // 4. Enable Form-based login (Browser style)
                 .formLogin(form -> form
-                        .defaultSuccessUrl("/products", true) // Where to go after login
+                        .loginPage("/login")             // Your custom login controller route
+                        .loginProcessingUrl("/login")
+                        .successHandler(successHandler)
+                        .failureUrl("/login?error=true")
                         .permitAll()
                 )
-                // 5. Enable Basic Auth (Keep this so Postman still works)
-                .httpBasic(Customizer.withDefaults())
-
-                // 6. Handle Logout
                 .logout(logout -> logout
-                        .logoutSuccessUrl("/products")
+                        .logoutSuccessUrl("/")
                         .permitAll()
                 )
-                // Keep this for H2 console if you still use it occasionally
+                // This prevents a redirect loop if a User tries to access Admin pages
+                .exceptionHandling(ex -> ex.accessDeniedPage("/login?denied=true"))
+
                 .headers(headers -> headers.frameOptions(f -> f.disable()));
 
         return http.build();
     }
-
 }

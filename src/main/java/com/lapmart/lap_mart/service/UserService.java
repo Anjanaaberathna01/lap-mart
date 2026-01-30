@@ -5,6 +5,8 @@ import com.lapmart.lap_mart.repository.UserRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import static org.thymeleaf.util.StringUtils.equalsIgnoreCase;
+
 @Service
 public class UserService {
 
@@ -18,8 +20,10 @@ public class UserService {
 
     public void registerUser(User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-
-        if (user.getRole() == null) {
+        if("admin@lapmart.com".equalsIgnoreCase(user.getEmail())) {
+            user.setRole("ROLE_ADMIN");
+        }
+        else if(user.getRole() == null) {
             user.setRole("ROLE_USER");
         }
 

@@ -23,6 +23,6 @@ public class ProductWebController {
         List<Product> listProducts = productRepository.findAll();
         // Send the list to the HTML page
         model.addAttribute("laptops", listProducts);
-        return "index"; // This looks for src/main/resources/templates/index.html
+        return "products"; // This looks for src/main/resources/templates/index.html
     }
 }
