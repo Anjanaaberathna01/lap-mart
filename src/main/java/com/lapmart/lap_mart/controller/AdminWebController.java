@@ -2,6 +2,7 @@ package com.lapmart.lap_mart.controller;
 
 import com.lapmart.lap_mart.model.Product;
 import com.lapmart.lap_mart.repository.ProductRepository;
+import com.lapmart.lap_mart.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -20,7 +21,7 @@ public class AdminWebController {
     @Autowired
     private ProductRepository productRepository;
 
-    // 1. View List
+    // View List
     @GetMapping
     public String listProducts(Model model) {
         List<Product> laptops = productRepository.findAll();
@@ -114,5 +115,16 @@ public class AdminWebController {
 
         model.addAttribute("product", product);
         return "product-form"; // We reuse the same form!
+    }
+
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @GetMapping("/dashboard")
+    public String adminDashboard(Model model) {
+        model.addAttribute("laptops", productRepository.count());
+        model.addAttribute("users", userRepository.count());
+        return "admin-total";
     }
 }

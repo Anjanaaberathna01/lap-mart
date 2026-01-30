@@ -2,10 +2,13 @@ package com.lapmart.lap_mart.controller;
 
 import com.lapmart.lap_mart.model.Order;
 import com.lapmart.lap_mart.model.Product;
+import com.lapmart.lap_mart.model.User;
 import com.lapmart.lap_mart.repository.OrderRepository;
 import com.lapmart.lap_mart.repository.ProductRepository;
+import com.lapmart.lap_mart.repository.UserRepository;
 import com.lapmart.lap_mart.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,8 +20,8 @@ import java.util.List;
 import java.nio.file.StandardCopyOption;
 import org.springframework.web.multipart.MultipartFile;
 
-@RestController
-@RequestMapping("/api/admin")
+@Controller
+@RequestMapping("/admin")
 public class AdminController {
 
     @Autowired
@@ -33,11 +36,6 @@ public class AdminController {
 
     // --- PRODUCT MANAGEMENT ---
 
-    @GetMapping("/products")
-    public String adminProductsPage(Model model) {
-        model.addAttribute("laptops", productRepository.findAll());
-        return "admin-products"; // Looks for admin-products.html
-    }
     @PostMapping("/products")
     public Product addProduct(@RequestBody Product product) {
         return productRepository.save(product);
@@ -75,7 +73,6 @@ public class AdminController {
     private void deletePhysicalFile(String relativePath) {
         if (relativePath != null && !relativePath.isEmpty()) {
             try {
-                // Convert the web path (/uploads/...) back to a full system path
                 Path filePath = Paths.get(System.getProperty("user.dir") + "/src/main/resources/static" + relativePath);
                 Files.deleteIfExists(filePath);
             } catch (IOException e) {
@@ -84,9 +81,37 @@ public class AdminController {
         }
     }
 
+    //--- USER MANAGEMENT ---
+    @Autowired
+    private UserRepository userRepository;
+
+    @GetMapping("/users")
+    public String ViewRegisteredUsers(Model model) {
+
+        List<User> listUsers = userRepository.findAll();
+        model.addAttribute("users", listUsers);
+       //return in admin-users.html
+        return "admin-users";
+    }
+
+    // --- ADMIN DASHBOARD ---
+    @GetMapping("/dashboard") // or your main admin landing page
+    public String adminDashboard(Model model) {
+        // 1. Get the counts from repositories
+        long totalUsers = userRepository.count();
+        long totalProducts = productRepository.count();
+
+        // 2. Add these numbers to the model
+        model.addAttribute("totalUsers", totalUsers);
+        model.addAttribute("totalProducts", totalProducts);
+
+        return "admin-total"; // Your dashboard HTML file
+    }
+
+
+
     // --- ORDER MANAGEMENT ---
 
-    // Fixed: Path is now /api/admin/orders (Unique from /products)
     @GetMapping("/orders")
     public List<Order> viewAllOrders() {
         return orderRepository.findAll();
@@ -94,13 +119,11 @@ public class AdminController {
 
     @PutMapping("/orders/{id}/status")
     public Order updateStatus(@PathVariable Long id, @RequestParam String status) {
-        // Fixed: Called via the injected 'orderService' instance
         return orderService.updateOrderStatus(id, status);
     }
 
     @DeleteMapping("/orders/{id}")
     public String removeOrder(@PathVariable Long id) {
-        // Fixed: Called via the injected 'orderService' instance
         orderService.deleteOrder(id);
         return "Order deleted successfully";
     }
