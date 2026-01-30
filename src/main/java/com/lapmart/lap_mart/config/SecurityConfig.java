@@ -36,7 +36,10 @@ public class SecurityConfig {
                         // 3. LOGGED-IN USERS (Products/Cart/etc)
                         .requestMatchers("/products/**").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN")
 
-                        // 4. CATCH-ALL
+                        // 4. CART & CHECKOUT - LOGGED-IN USERS
+                        .requestMatchers("/cart/**", "/checkout/**").hasAnyAuthority("ROLE_USER")
+
+                        // 5. CATCH-ALL
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

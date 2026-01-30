@@ -1,28 +1,43 @@
 package com.lapmart.lap_mart.controller;
 
 import com.lapmart.lap_mart.model.User;
+import com.lapmart.lap_mart.repository.ProductRepository;
 import com.lapmart.lap_mart.repository.UserRepository;
 import com.lapmart.lap_mart.service.CartService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 
-@RestController
-@RequestMapping("/api/cart")
+@Controller
+@RequestMapping("/cart")
 public class CartController {
     @Autowired
     private CartService cartService;
 
     @Autowired
-    private UserRepository userRepository; // To find the logged-in user
+    private UserRepository userRepository;
 
-    @PostMapping("/add/{productId}/{quantity}")
-    public String addItem(@PathVariable Long productId, @PathVariable int quantity, Principal principal) {
+    @PostMapping("/add/{productId}")
+    public String addItem(@PathVariable Long productId,
+                          @RequestParam(defaultValue = "1") int quantity,
+                          Principal principal) {
+
+        User user = userRepository.findByEmail(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        cartService.addProductToCart(user, productId ,quantity );
+
+        return "redirect:/cart";
+    }
+
+    @GetMapping
+    public String showCartPage(Model model, Principal principal) {
         User user = userRepository.findByEmail(principal.getName()).get();
-        return "Added to cart!";
+        model.addAttribute("cartItems", cartService.getCartItems(user));
+        model.addAttribute("totalPrice", cartService.getTotalPrice(user));
+        return "cart"; // This looks for src/main/resources/templates/cart.html
     }
 }
