@@ -22,7 +22,6 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Keep disabled for Postman testing
                 .authorizeHttpRequests(auth -> auth
                         // 1. PUBLIC ASSETS & AUTHENTICATION
                         // We permit these so that the login page can actually load without redirecting to itself

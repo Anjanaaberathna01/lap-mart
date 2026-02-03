@@ -1,77 +1,90 @@
-package com.lapmart.lap_mart.service;
+// java
+        package com.lapmart.lap_mart.service;
 
-import com.lapmart.lap_mart.model.*;
-import com.lapmart.lap_mart.repository.CartRepository;
-import com.lapmart.lap_mart.repository.OrderRepository;
-import com.lapmart.lap_mart.repository.ProductRepository;
-import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+        import com.lapmart.lap_mart.model.CartItem;
+        import com.lapmart.lap_mart.model.Order;
+        import com.lapmart.lap_mart.model.OrderItem;
+        import com.lapmart.lap_mart.model.Product;
+        import com.lapmart.lap_mart.model.User;
+        import com.lapmart.lap_mart.repository.OrderRepository;
+        import org.springframework.beans.factory.annotation.Autowired;
+        import org.springframework.stereotype.Service;
+        import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+        import java.math.BigDecimal;
+        import java.util.List;
 
-@Service
-public class OrderService {
-    @Autowired
-    private OrderRepository orderRepository;
-    @Autowired private CartRepository cartRepository;
-    @Autowired private ProductRepository productRepository;
+        @Service
+        public class OrderService {
 
-    @Transactional
-    public Order placeOrder(User user) {
-        List<CartItem> cartItems = cartRepository.findByUser(user);
-        if (cartItems.isEmpty()) throw new RuntimeException("Cart is empty");
+            @Autowired
+            private OrderRepository orderRepository;
 
-        Order order = new Order();
-        order.setUser(user);
-        order.setOrderDate(LocalDateTime.now());
-        order.setStatus("PENDING");
+            @Autowired
+            private CartService cartService;
 
-        double total = 0;
-        List<OrderItem> items = new ArrayList<>();
-
-        for (CartItem cartItem : cartItems) {
-            Product product = cartItem.getProduct();
-
-            // Check Stock
-            if (product.getStockQuantity() < cartItem.getQuantity()) {
-                throw new RuntimeException("Not enough stock for: " + product.getModelName());
+            /**
+             * Convenience overload used by API controller that doesn't supply shipping/payment.
+             */
+            @Transactional
+            public Order placeOrder(User user) {
+                return placeOrder(user, null, null, null);
             }
 
-            // Update Stock
-            product.setStockQuantity(product.getStockQuantity() - cartItem.getQuantity());
-            productRepository.save(product);
+            /**
+             * Create Order from user's cart, persist and clear cart.
+             */
+            @Transactional
+            public Order placeOrder(User user, String shippingAddress, String phoneNumber, String paymentMethod) {
+                List<CartItem> cartItems = cartService.getCartItems(user);
+                if (cartItems == null || cartItems.isEmpty()) {
+                    throw new IllegalStateException("Cart is empty");
+                }
 
-            // Create Order Item
-            OrderItem orderItem = new OrderItem();
-            orderItem.setOrder(order);
-            orderItem.setProduct(product);
-            orderItem.setQuantity(cartItem.getQuantity());
-            orderItem.setPriceAtPurchase(product.getPrice());
+                Order order = new Order();
+                order.setUser(user);
+                order.setShippingAddress(shippingAddress);
+                order.setPhoneNumber(phoneNumber);
+                order.setPaymentMethod(paymentMethod);
 
-            total += product.getPrice() * cartItem.getQuantity();
-            items.add(orderItem);
+                BigDecimal total = BigDecimal.ZERO;
+                for (CartItem ci : cartItems) {
+                    Product p = ci.getProduct();
+                    BigDecimal unit = BigDecimal.valueOf(p.getPrice());
+                    int qty = ci.getQuantity();
+                    OrderItem oi = new OrderItem(p.getId(), p.getBrand() + " " + p.getModelName(), unit, qty);
+                    oi.setOrder(order);
+                    order.getItems().add(oi);
+                    total = total.add(oi.getSubtotal());
+                }
+                order.setTotalPrice(total);
+
+                Order saved = orderRepository.save(order);
+
+                cartService.clearCart(user);
+
+                return saved;
+            }
+
+            /**
+             * Update order status
+             */
+            @Transactional
+            public Order updateOrderStatus(Long orderId, String status) {
+                Order order = orderRepository.findById(orderId)
+                        .orElseThrow(() -> new RuntimeException("Order not found: " + orderId));
+                order.setStatus(status);
+                return orderRepository.save(order);
+            }
+
+            /**
+             * Delete order
+             */
+            @Transactional
+            public void deleteOrder(Long orderId) {
+                if (!orderRepository.existsById(orderId)) {
+                    throw new RuntimeException("Order not found: " + orderId);
+                }
+                orderRepository.deleteById(orderId);
+            }
         }
-
-        order.setTotalAmount(total);
-        order.setOrderItems(items);
-
-        cartRepository.deleteAll(cartItems); // Clear the cart
-        return orderRepository.save(order);
-    }
-    public Order updateOrderStatus(Long orderId, String status) {
-        // Now this can correctly access the non-static orderRepository
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-        order.setStatus(status);
-        return orderRepository.save(order);
-    }
-
-    // 2. REMOVED 'static' keyword here
-    public void deleteOrder(Long orderId) {
-        orderRepository.deleteById(orderId);
-    }
-
-}
