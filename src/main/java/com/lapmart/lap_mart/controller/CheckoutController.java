@@ -22,11 +22,11 @@ public class CheckoutController {
     @GetMapping("/checkout")
     public String showCheckoutPage(Model model, Principal principal) {
         User user = userRepository.findByEmail(principal.getName())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + principal.getName()));
         
         model.addAttribute("cartItems", cartService.getCartItems(user));
         model.addAttribute("totalPrice", cartService.getTotalPrice(user));
         
-        return "checkout"; // This looks for src/main/resources/templates/checkout.html
+        return "checkout";
     }
 }
