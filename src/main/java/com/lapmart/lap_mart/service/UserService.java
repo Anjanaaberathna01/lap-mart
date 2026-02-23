@@ -32,4 +32,14 @@ public class UserService {
     public Optional<User> getUserByEmail(String email) {
         return userRepository.findByEmail(email);
     }
+    public User updateUserProfile(String email, User profileData) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setFullName(profileData.getFullName());
+        user.setPhoneNumber(profileData.getPhoneNumber());
+        user.setAddress(profileData.getAddress());
+
+        return userRepository.save(user);
+    }
 }
