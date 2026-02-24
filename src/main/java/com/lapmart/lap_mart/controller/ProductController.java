@@ -1,6 +1,5 @@
 package com.lapmart.lap_mart.controller;
 
-import ch.qos.logback.core.model.Model;
 import com.lapmart.lap_mart.model.Product;
 import com.lapmart.lap_mart.service.ProductService;
 import org.springframework.web.bind.annotation.*;

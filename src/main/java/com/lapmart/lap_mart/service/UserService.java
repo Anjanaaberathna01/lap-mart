@@ -5,8 +5,6 @@ import com.lapmart.lap_mart.repository.UserRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import static org.thymeleaf.util.StringUtils.equalsIgnoreCase;
-
 @Service
 public class UserService {
 

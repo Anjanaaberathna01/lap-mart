@@ -1,7 +1,6 @@
 package com.lapmart.lap_mart.controller;
 
 import com.lapmart.lap_mart.model.User;
-import com.lapmart.lap_mart.repository.ProductRepository;
 import com.lapmart.lap_mart.repository.UserRepository;
 import com.lapmart.lap_mart.service.CartService;
 import org.springframework.beans.factory.annotation.Autowired;

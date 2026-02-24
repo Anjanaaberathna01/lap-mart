@@ -79,7 +79,7 @@ const Home = () => {
   return (
     <div>
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 text-white overflow-hidden">
+      <section className="relative bg-linear-to-br from-blue-600 via-purple-600 to-pink-600 text-white overflow-hidden">
         {/* Animated Background Orbs */}
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl animate-pulse"></div>

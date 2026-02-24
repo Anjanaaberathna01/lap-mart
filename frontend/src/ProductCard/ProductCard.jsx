@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import RatingStars from '../RatingStars';
+import RatingStars from '../components/RatingStars';
 
 const ProductCard = ({ product }) => {
   const { id, title, price, image, rating, reviews } = product;
@@ -36,7 +36,7 @@ const ProductCard = ({ product }) => {
         onMouseLeave={() => setIsHovered(false)}
       >
         {/* Product Image */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 aspect-square">
+        <div className="relative overflow-hidden bg-linear-to-br from-gray-50 to-gray-100 aspect-square">
           <img
             src={image}
             alt={title}
@@ -44,7 +44,7 @@ const ProductCard = ({ product }) => {
           />
           
           {/* Overlay Actions */}
-          <div className={`absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 transition-opacity duration-300 ${
+          <div className={`absolute inset-0 bg-linear-to-t from-black/60 via-black/0 to-black/0 transition-opacity duration-300 ${
             isHovered ? 'opacity-100' : 'opacity-0'
           }`}>
             <div className="absolute bottom-4 left-4 right-4 flex gap-2">
@@ -68,7 +68,7 @@ const ProductCard = ({ product }) => {
 
           {/* Badge */}
           {reviews > 200 && (
-            <div className="absolute top-4 right-4 bg-gradient-to-r from-amber-500 to-orange-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+            <div className="absolute top-4 right-4 bg-linear-to-r from-amber-500 to-orange-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
               Popular
             </div>
           )}
@@ -77,7 +77,7 @@ const ProductCard = ({ product }) => {
         {/* Product Info */}
         <div className="p-5">
           {/* Title */}
-          <h3 className="text-base font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors min-h-[3rem]">
+          <h3 className="text-base font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors min-h-12">
             {title}
           </h3>
 
@@ -90,13 +90,13 @@ const ProductCard = ({ product }) => {
           {/* Price & Button */}
           <div className="flex items-center justify-between gap-3">
             <div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <span className="text-2xl font-bold bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 ${price.toLocaleString()}
               </span>
             </div>
             <button
               onClick={handleAddToCart}
-              className="p-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg hover:scale-110 transition-all duration-200"
+              className="p-2.5 bg-linear-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg hover:scale-110 transition-all duration-200"
               aria-label="Add to cart"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
