@@ -26,7 +26,21 @@ public class AdminWebController {
     public String listProducts(Model model) {
         List<Product> laptops = productRepository.findAll();
         model.addAttribute("laptops", laptops);
-        return "admin-products"; // admin-products.html
+        // Add counts so the admin products page can show dashboard badges
+        try {
+            // userRepository is autowired below in this class
+            long totalProducts = productRepository.count();
+            model.addAttribute("totalProducts", totalProducts);
+        } catch (Exception ignored) {
+            model.addAttribute("totalProducts", 0);
+        }
+        try {
+            // userRepository may be present and provide the user count
+            model.addAttribute("totalUsers", userRepository != null ? userRepository.count() : 0);
+        } catch (Exception ignored) {
+            model.addAttribute("totalUsers", 0);
+        }
+        return "admin/admin-products"; // templates/admin/admin-products.html
     }
 
     @GetMapping("/add")
@@ -122,9 +136,8 @@ public class AdminWebController {
     private UserRepository userRepository;
 
     @GetMapping("/dashboard")
-    public String adminDashboard(Model model) {
-        model.addAttribute("laptops", productRepository.count());
-        model.addAttribute("users", userRepository.count());
-        return "admin-total";
+    public String adminDashboardRedirect() {
+        // Redirect to the main admin dashboard handled by AdminController
+        return "redirect:/admin/dashboard";
     }
 }

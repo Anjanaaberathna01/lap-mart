@@ -17,7 +17,6 @@ public class AuthController {
 
     @PostMapping("/register")
     public String register(@RequestBody User user) {
-        // Now 'user' is the correct type from your model package
         userService.registerUser(user);
         return "User registered successfully!";
     }

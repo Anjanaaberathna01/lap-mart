@@ -11,12 +11,18 @@
   <h2>Admin Inventory Management</h2>
   <a th:href="@{/admin/products/add}" class="btn btn-success">Add New Laptop</a>
 </div>
-<ul class="navbar-nav">
+<ul class="navbar-nav d-flex flex-row gap-3 align-items-center">
   <li class="nav-item">
-    <a class="nav-link active" th:href="@{/admin/dashboard}">Dashboard</a>
+    <a class="nav-link active" th:href="@{/admin/dashboard}">Dashboard
+      <span class="badge bg-primary ms-2" th:text="${totalUsers}">0</span>
+      <span class="badge bg-info ms-1" th:text="${totalProducts}">0</span>
+    </a>
   </li>
   <li class="nav-item">
     <a class="nav-link" th:href="@{/admin/users}">Manage Users</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" th:href="@{/admin/orders}">Manage Orders</a>
   </li>
 </ul>
 

@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Entity
 @Data
-@Table(name = "User")
+@Table(name = "app_users")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,4 +21,9 @@ public class User {
 
     private String role;
 
+    private String phoneNumber;
+    private String address;
+
+    // whether the account is active (admin can deactivate)
+    private boolean enabled = true;
 }

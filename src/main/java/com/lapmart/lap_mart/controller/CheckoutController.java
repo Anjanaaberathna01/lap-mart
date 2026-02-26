@@ -90,7 +90,6 @@
 
             @GetMapping("/order-success")
             public String showOrderSuccess(Model model) {
-                // If no flash message present, provide a default message so the page still renders.
                 if (!model.containsAttribute("successMessage")) {
                     model.addAttribute("successMessage", "Your order has been received.");
                 }

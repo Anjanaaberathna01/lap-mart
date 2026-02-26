@@ -87,4 +87,17 @@
                 }
                 orderRepository.deleteById(orderId);
             }
+
+            /**
+             *
+             * get order from repo
+             */
+            public OrderService(OrderRepository orderRepository){
+                this.orderRepository = orderRepository;
+            }
+            public Order findByIDOrThrow(Long id){
+                return orderRepository.findById(id)
+                        .orElseThrow(() -> new IllegalArgumentException("Order is not found: " + id));
+            }
+
         }

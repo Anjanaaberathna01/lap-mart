@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Summary</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="container mt-4">
+
+<div th:if="${dbError}" class="alert alert-warning">Database error: <span th:text="${dbError}"></span></div>
+
+  <div class="row">
+    <div class="col-md-4">
+      <div class="card bg-primary text-white shadow">
+        <div class="card-body text-center">
+          <h5 class="card-title">Total Registered Users</h5>
+          <h2 class="display-4" th:text="${totalUsers ?: 0}">0</h2>
+          <a th:href="@{/admin/users}" class="btn btn-light btn-sm mt-2">View All Users</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card bg-success text-white shadow">
+        <div class="card-body text-center">
+          <h5 class="card-title">Total Orders</h5>
+          <h2 class="display-4" th:text="${totalOrders ?: 0}">0</h2>
+          <a th:href="@{/admin/orders}" class="btn btn-light btn-sm mt-2" aria-label="View all orders">
+            View Orders
+            <span class="badge bg-secondary ms-2" th:text="${totalOrders ?: 0}">0</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card bg-info text-white shadow">
+        <div class="card-body text-center">
+          <h5 class="card-title">Total Products</h5>
+          <h2 class="display-4" th:text="${totalProducts ?: 0}">0</h2>
+          <a th:href="@{/admin/products}" class="btn btn-light btn-sm mt-2">Manage Stock</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
