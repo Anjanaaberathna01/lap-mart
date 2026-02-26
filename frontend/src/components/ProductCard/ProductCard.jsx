@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import RatingStars from '../components/RatingStars';
+import RatingStars from '../RatingStars';
 
 const ProductCard = ({ product }) => {
   const { id, title, price, image, rating, reviews } = product;

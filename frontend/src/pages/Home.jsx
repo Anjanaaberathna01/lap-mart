@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
-import ProductCard from '../ProductCard/ProductCard';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
+import ProductCard from '../components/ProductCard/ProductCard';
 
 const Home = () => {
   // Sample featured products
@@ -78,6 +80,7 @@ const Home = () => {
 
   return (
     <div>
+      <Header />
       {/* Hero Section */}
       <section className="relative bg-linear-to-br from-blue-600 via-purple-600 to-pink-600 text-white overflow-hidden">
         {/* Animated Background Orbs */}
@@ -254,6 +257,7 @@ const Home = () => {
           </div>
         </div>
       </section>
+      <Footer />
     </div>
   );
 };
