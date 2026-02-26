@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add / Edit Keyboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="container mt-4">
+<div class="card shadow">
+    <div class="card-header bg-primary text-white">
+        <h3 th:text="${keyboard.id} == null ? 'Add Keyboard' : 'Edit Keyboard'"></h3>
+    </div>
+    <div class="card-body">
+        <form th:action="@{/admin/keyboards/save}" th:object="${keyboard}" method="post" enctype="multipart/form-data">
+            <input type="hidden" th:field="*{id}"/>
+            <!-- Preserve existing image paths so controller can keep them when no new file is uploaded -->
+            <input type="hidden" th:field="*{image1}" />
+            <input type="hidden" th:field="*{image2}" />
+            <input type="hidden" th:field="*{image3}" />
+
+            <div class="mb-3">
+                <label class="form-label">Brand</label>
+                <input type="text" th:field="*{brand}" class="form-control" required />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Price</label>
+                <input type="number" step="0.01" th:field="*{price}" class="form-control" required />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Image 1 (upload)</label>
+                <div>
+                    <input type="file" name="image1File" accept="image/*" class="form-control"/>
+                </div>
+                <div class="mt-2" th:if="${keyboard.image1 != null}">
+                    <small class="text-muted">Current:</small>
+                    <div><img th:src="${keyboard.image1}" width="120" class="img-thumbnail" alt="Image1"/></div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Image 2 (upload)</label>
+                <div>
+                    <input type="file" name="image2File" accept="image/*" class="form-control"/>
+                </div>
+                <div class="mt-2" th:if="${keyboard.image2 != null}">
+                    <small class="text-muted">Current:</small>
+                    <div><img th:src="${keyboard.image2}" width="120" class="img-thumbnail" alt="Image2"/></div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Image 3 (upload)</label>
+                <div>
+                    <input type="file" name="image3File" accept="image/*" class="form-control"/>
+                </div>
+                <div class="mt-2" th:if="${keyboard.image3 != null}">
+                    <small class="text-muted">Current:</small>
+                    <div><img th:src="${keyboard.image3}" width="120" class="img-thumbnail" alt="Image3"/></div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <a th:href="@{/admin/dashboard}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

@@ -7,17 +7,23 @@ import com.lapmart.lap_mart.repository.OrderRepository;
 import com.lapmart.lap_mart.repository.ProductRepository;
 import com.lapmart.lap_mart.repository.UserRepository;
 import com.lapmart.lap_mart.service.OrderService;
+import com.lapmart.lap_mart.model.Keyboard;
+import com.lapmart.lap_mart.repository.KeyboardRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Optional;
 import java.security.Principal;
@@ -41,6 +47,9 @@ public class AdminController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private KeyboardRepository keyboardRepository;
 
     // --- PRODUCT MANAGEMENT ---
 
@@ -168,9 +177,34 @@ public class AdminController {
             long totalProducts = productRepository.count();
             long totalOrders = orderRepository.count();
 
+            // keyboards counts and recent lists
+            long totalKeyboards = keyboardRepository.count();
+
+            // recent products (last 5) and recent keyboards (last 5)
+            java.util.List<Product> recentProducts = java.util.Collections.emptyList();
+            java.util.List<Keyboard> recentKeyboards = java.util.Collections.emptyList();
+            try {
+                recentProducts = productRepository.findAll(PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "id"))).getContent();
+            } catch (Exception ignored) { }
+
+            try {
+                recentKeyboards = keyboardRepository.findTop5ByOrderByIdDesc();
+            } catch (Exception ignored) { }
+
+            // full products list for fallback in template
+            java.util.List<Product> laptops = java.util.Collections.emptyList();
+            try {
+                laptops = productRepository.findAll();
+            } catch (Exception ignored) { }
+
             model.addAttribute("totalUsers", totalUsers);
             model.addAttribute("totalProducts", totalProducts);
             model.addAttribute("totalOrders", totalOrders);
+
+            model.addAttribute("totalKeyboards", totalKeyboards);
+            model.addAttribute("recentProducts", recentProducts);
+            model.addAttribute("recentKeyboards", recentKeyboards);
+            model.addAttribute("laptops", laptops);
         } catch (Exception ex) {
             // don't fail rendering; show an info box with the message
             model.addAttribute("dbError", ex.getMessage());
@@ -179,7 +213,7 @@ public class AdminController {
             model.addAttribute("totalOrders", 0);
         }
 
-        return "admin/admin-total";
+        return "admin/admin-dashboard";
     }
 
     // --- ORDER MANAGEMENT (UI) ---
@@ -297,5 +331,102 @@ public class AdminController {
         List<Order> orders = orderRepository.findAllWithUser();
         logger.info("ordersJson returning {} orders", orders != null ? orders.size() : 0);
         return orders;
+    }
+
+    // --- KEYBOARD MANAGEMENT (Admin UI) ---
+    // list keyboards
+    @GetMapping("/keyboards")
+    public String listKeyboards(Model model) {
+        List<Keyboard> keyboards = keyboardRepository.findAll();
+        model.addAttribute("keyboards", keyboards);
+        return "admin/admin-keyboards"; // create template admin-keyboards.html
+    }
+
+    // show add form
+    @GetMapping("/keyboards/add")
+    public String showAddKeyboardForm(Model model) {
+        model.addAttribute("keyboard", new Keyboard());
+        return "admin/keyboard-form"; // create template keyboard-form.html
+    }
+
+    // save new keyboard (from form)
+    @PostMapping("/keyboards/save")
+    public String saveKeyboard(@ModelAttribute Keyboard keyboard,
+                               @RequestParam(value = "image1File", required = false) MultipartFile image1File,
+                               @RequestParam(value = "image2File", required = false) MultipartFile image2File,
+                               @RequestParam(value = "image3File", required = false) MultipartFile image3File,
+                               RedirectAttributes redirectAttrs) {
+        try {
+            // ensure uploads dir exists
+            Path uploadsDir = Paths.get(System.getProperty("user.dir"), "src", "main", "resources", "static", "uploads");
+            if (!Files.exists(uploadsDir)) {
+                Files.createDirectories(uploadsDir);
+            }
+
+            // Image1
+            if (image1File != null && !image1File.isEmpty()) {
+                String p = saveUploadedFile(image1File, uploadsDir);
+                keyboard.setImage1(p);
+            }
+            // Image2
+            if (image2File != null && !image2File.isEmpty()) {
+                String p = saveUploadedFile(image2File, uploadsDir);
+                keyboard.setImage2(p);
+            }
+            // Image3
+            if (image3File != null && !image3File.isEmpty()) {
+                String p = saveUploadedFile(image3File, uploadsDir);
+                keyboard.setImage3(p);
+            }
+
+            keyboardRepository.save(keyboard);
+            redirectAttrs.addFlashAttribute("success", "Keyboard saved successfully");
+            return "redirect:/admin/dashboard";
+        } catch (Exception ex) {
+            redirectAttrs.addFlashAttribute("error", "Could not save keyboard: " + ex.getMessage());
+            return "redirect:/admin/keyboards";
+        }
+    }
+
+    private String saveUploadedFile(MultipartFile file, Path uploadsDir) throws Exception {
+        String original = file.getOriginalFilename();
+        String safeName = System.currentTimeMillis() + "_" + (original != null ? original.replaceAll("[^a-zA-Z0-9._-]", "_") : "file");
+        Path dest = uploadsDir.resolve(safeName);
+        try (InputStream in = file.getInputStream()) {
+            Files.copy(in, dest, StandardCopyOption.REPLACE_EXISTING);
+        }
+        // return web-accessible path (assuming /static is served from root)
+        return "/uploads/" + safeName;
+    }
+
+    // show edit form
+    @GetMapping("/keyboards/edit/{id}")
+    public String showEditKeyboardForm(@PathVariable Long id, Model model, RedirectAttributes redirectAttrs) {
+        Optional<Keyboard> opt = keyboardRepository.findById(id);
+        if (opt.isEmpty()) {
+            redirectAttrs.addFlashAttribute("error", "Keyboard not found");
+            return "redirect:/admin/keyboards";
+        }
+        model.addAttribute("keyboard", opt.get());
+        return "admin/keyboard-form";
+    }
+
+    // delete keyboard
+    @PostMapping("/keyboards/delete/{id}")
+    public String deleteKeyboard(@PathVariable Long id, RedirectAttributes redirectAttrs) {
+        Optional<Keyboard> opt = keyboardRepository.findById(id);
+        if (opt.isEmpty()) {
+            redirectAttrs.addFlashAttribute("error", "Keyboard not found");
+            return "redirect:/admin/keyboards";
+        }
+        Keyboard k = opt.get();
+        // remove image files if present
+        deletePhysicalFile(k.getImage1());
+        deletePhysicalFile(k.getImage2());
+        deletePhysicalFile(k.getImage3());
+
+        keyboardRepository.deleteById(id);
+        redirectAttrs.addFlashAttribute("success", "Keyboard deleted");
+        return "redirect:/admin/keyboards";
     }
 }

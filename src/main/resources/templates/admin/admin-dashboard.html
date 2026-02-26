@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="container mt-4">
+
+<div th:if="${dbError}" class="alert alert-warning">Database error: <span th:text="${dbError}"></span></div>
+
+<div class="row">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white shadow">
+            <div class="card-body text-center">
+                <h5 class="card-title">Total Registered Users</h5>
+                <h2 class="display-4" th:text="${totalUsers ?: 0}">0</h2>
+                <a th:href="@{/admin/users}" class="btn btn-light btn-sm mt-2">View All Users</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card bg-success text-white shadow">
+            <div class="card-body text-center">
+                <h5 class="card-title">Total Orders</h5>
+                <h2 class="display-4" th:text="${totalOrders ?: 0}">0</h2>
+                <a th:href="@{/admin/orders}" class="btn btn-light btn-sm mt-2" aria-label="View all orders">
+                    View Orders
+                    <span class="badge bg-secondary ms-2" th:text="${totalOrders ?: 0}">0</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card bg-info text-white shadow">
+            <div class="card-body text-center">
+                <h5 class="card-title">Total Products</h5>
+                <h2 class="display-4" th:text="${totalProducts ?: 0}">0</h2>
+                <a th:href="@{/admin/products}" class="btn btn-light btn-sm mt-2">Manage Stock</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark shadow">
+            <div class="card-body text-center">
+                <h5 class="card-title">Keyboards</h5>
+                <h2 class="display-4" th:text="${totalKeyboards ?: 0}">0</h2>
+                <a th:href="@{/admin/keyboards}" class="btn btn-light btn-sm mt-2">Manage Keyboards</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Products preview -->
+<div class="mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <!-- Indicate we display the last 5 items -->
+        <h4>Recent Products (last 5)</h4>
+        <a th:href="@{/admin/products}" class="btn btn-sm btn-primary">View All Products</a>
+    </div>
+
+    <!-- If both recentProducts and laptops are empty, show a message -->
+    <div th:if="${#lists.isEmpty(recentProducts) and #lists.isEmpty(laptops)}">
+        <div class="alert alert-info">No products found.</div>
+    </div>
+
+    <!-- If recentProducts is provided, show its last five items -->
+    <div th:if="${!#lists.isEmpty(recentProducts)}">
+        <table class="table table-sm table-striped">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Brand</th>
+                <th>Model</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Image</th>
+            </tr>
+            </thead>
+            <tbody>
+            <!-- Use a safe subList to take the last 5 items when the list is longer than 5 -->
+            <tr th:each="p : ${ (recentProducts.size() > 5) ? recentProducts.subList(recentProducts.size() - 5, recentProducts.size()) : recentProducts }">
+                <td th:text="${p.id}">1</td>
+                <td th:text="${p.brand}">Brand</td>
+                <td th:text="${p.modelName}">Model</td>
+                <td th:text="${p.price}">0.00</td>
+                <td th:text="${p.stockQuantity}">0</td>
+                <td>
+                    <img th:if="${p.imageUrl1 != null}" th:src="${p.imageUrl1}" width="80" class="img-thumbnail" alt="Product Image" />
+                    <span th:if="${p.imageUrl1 == null}" class="text-muted">No Image</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Fallback: if recentProducts not provided but 'laptops' exists, show last five laptops -->
+    <div th:if="${#lists.isEmpty(recentProducts) and !#lists.isEmpty(laptops)}">
+        <table class="table table-sm table-striped">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Brand</th>
+                <th>Model</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Image</th>
+            </tr>
+            </thead>
+            <tbody>
+            <!-- Same safe subList approach for laptops -->
+            <tr th:each="p : ${ (laptops.size() > 5) ? laptops.subList(laptops.size() - 5, laptops.size()) : laptops }">
+                <td th:text="${p.id}">1</td>
+                <td th:text="${p.brand}">Brand</td>
+                <td th:text="${p.modelName}">Model</td>
+                <td th:text="${p.price}">0.00</td>
+                <td th:text="${p.stockQuantity}">0</td>
+                <td>
+                    <img th:if="${p.imageUrl1 != null}" th:src="${p.imageUrl1}" width="80" class="img-thumbnail" alt="Product Image" />
+                    <span th:if="${p.imageUrl1 == null}" class="text-muted">No Image</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Recent Keyboards preview -->
+<div class="mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h4>Recent Keyboards (last 5)</h4>
+        <a th:href="@{/admin/keyboards}" class="btn btn-sm btn-primary">View All Keyboards</a>
+    </div>
+
+    <div th:if="${#lists.isEmpty(recentKeyboards)}">
+        <div class="alert alert-info">No keyboards found.</div>
+    </div>
+
+    <div th:if="${!#lists.isEmpty(recentKeyboards)}">
+        <table class="table table-sm table-striped">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Brand</th>
+                <th>Price</th>
+                <th>Image</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <!-- show at most 5 items; controller already tries to provide top 5, but be defensive here -->
+            <tr th:each="k : ${ (recentKeyboards.size() > 5) ? recentKeyboards.subList(recentKeyboards.size() - 5, recentKeyboards.size()) : recentKeyboards }">
+                <td th:text="${k.id}">1</td>
+                <td th:text="${k.brand}">Brand</td>
+                <td th:text="${#numbers.formatDecimal(k.price, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                <td>
+                    <img th:if="${k.image1 != null}" th:src="${k.image1}" width="80" class="img-thumbnail" alt="Keyboard Image" />
+                    <span th:if="${k.image1 == null}" class="text-muted">No Image</span>
+                </td>
+                <td>
+                    <a th:href="@{'/admin/keyboards/edit/' + ${k.id}}" class="btn btn-sm btn-secondary">Edit</a>
+                    <form th:action="@{'/admin/keyboards/delete/' + ${k.id}}" method="post" style="display:inline-block; margin-left:6px;">
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this keyboard?');">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+</body>
+</html>
