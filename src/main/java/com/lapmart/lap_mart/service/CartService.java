@@ -1,7 +1,8 @@
 package com.lapmart.lap_mart.service;
 
-import com.lapmart.lap_mart.model.*;
+import com.lapmart.lap_mart.model.CartItem;
 import com.lapmart.lap_mart.model.Laptop;
+import com.lapmart.lap_mart.model.User;
 import com.lapmart.lap_mart.repository.CartRepository;
 import com.lapmart.lap_mart.repository.ProductRepository;
 import com.lapmart.lap_mart.repository.UserRepository;
@@ -9,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,7 +24,6 @@ public class CartService {
 
     @Autowired
     private UserRepository userRepository;
-
 
     public List<CartItem> getCartItems(User user) {
         return cartRepository.findByUser(user);
@@ -61,7 +60,6 @@ public class CartService {
         addProductToCart(user, productId, quantity);
     }
 
-    // Existing total calculation method
     public double getTotalAmount(User user) {
         List<CartItem> items = getCartItems(user);
         return items.stream()

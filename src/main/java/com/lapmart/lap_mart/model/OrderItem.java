@@ -1,4 +1,3 @@
-// java
 package com.lapmart.lap_mart.model;
 
 import jakarta.persistence.*;
