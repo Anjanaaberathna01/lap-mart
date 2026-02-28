@@ -1,7 +1,7 @@
 package com.lapmart.lap_mart.controller;
 
 import ch.qos.logback.core.model.Model;
-import com.lapmart.lap_mart.model.Product;
+import com.lapmart.lap_mart.model.Laptop;
 import com.lapmart.lap_mart.service.ProductService;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,12 +18,12 @@ public class ProductController {
     }
 
     @GetMapping
-    public List<Product> viewAllLaptops() {
+    public List<Laptop> viewAllLaptops() {
         return productService.getAllLaptops();
     }
 
     @GetMapping("/{id}")
-    public Product viewLaptopDetails(@PathVariable Long id) {
+    public Laptop viewLaptopDetails(@PathVariable Long id) {
         return productService.getLaptopById(id);
     }
 

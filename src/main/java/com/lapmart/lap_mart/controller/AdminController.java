@@ -1,7 +1,7 @@
 package com.lapmart.lap_mart.controller;
 
 import com.lapmart.lap_mart.model.Order;
-import com.lapmart.lap_mart.model.Product;
+import com.lapmart.lap_mart.model.Laptop;
 import com.lapmart.lap_mart.model.User;
 import com.lapmart.lap_mart.repository.OrderRepository;
 import com.lapmart.lap_mart.repository.ProductRepository;
@@ -9,6 +9,9 @@ import com.lapmart.lap_mart.repository.UserRepository;
 import com.lapmart.lap_mart.service.OrderService;
 import com.lapmart.lap_mart.model.Keyboard;
 import com.lapmart.lap_mart.repository.KeyboardRepository;
+import com.lapmart.lap_mart.service.KeyboardService;
+import com.lapmart.lap_mart.model.Monitor;
+import com.lapmart.lap_mart.service.MonitorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.PageRequest;
@@ -17,6 +20,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.MediaType;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,6 +33,8 @@ import java.util.Optional;
 import java.security.Principal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import jakarta.validation.Valid;
+import org.springframework.validation.BindingResult;
 
 @Controller
 @RequestMapping("/admin")
@@ -51,16 +57,22 @@ public class AdminController {
     @Autowired
     private KeyboardRepository keyboardRepository;
 
+    @Autowired
+    private KeyboardService keyboardService;
+
+    @Autowired
+    private MonitorService monitorService;
+
     // --- PRODUCT MANAGEMENT ---
 
     @PostMapping("/products")
-    public Product addProduct(@RequestBody Product product) {
+    public Laptop addProduct(@RequestBody Laptop product) {
         return productRepository.save(product);
     }
 
     @PutMapping("/products/{id}")
-    public Product updateProduct(@PathVariable Long id, @RequestBody Product productDetails) {
-        Product product = productRepository.findById(id)
+    public Laptop updateProduct(@PathVariable Long id, @RequestBody Laptop productDetails) {
+        Laptop product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
         product.setBrand(productDetails.getBrand());
@@ -73,7 +85,7 @@ public class AdminController {
 
     @GetMapping("/delete/{id}")
     public String deleteProduct(@PathVariable Long id) {
-        Product product = productRepository.findById(id)
+        Laptop product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
         deletePhysicalFile(product.getImageUrl1());
@@ -176,13 +188,15 @@ public class AdminController {
             long totalUsers = userRepository.count();
             long totalProducts = productRepository.count();
             long totalOrders = orderRepository.count();
+            long totalMonitors = monitorService.count();
 
             // keyboards counts and recent lists
             long totalKeyboards = keyboardRepository.count();
 
             // recent products (last 5) and recent keyboards (last 5)
-            java.util.List<Product> recentProducts = java.util.Collections.emptyList();
+            java.util.List<Laptop> recentProducts = java.util.Collections.emptyList();
             java.util.List<Keyboard> recentKeyboards = java.util.Collections.emptyList();
+            java.util.List<Monitor> recentMonitors = java.util.Collections.emptyList();
             try {
                 recentProducts = productRepository.findAll(PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "id"))).getContent();
             } catch (Exception ignored) { }
@@ -191,8 +205,12 @@ public class AdminController {
                 recentKeyboards = keyboardRepository.findTop5ByOrderByIdDesc();
             } catch (Exception ignored) { }
 
+            try {
+                recentMonitors = monitorService.findTop5();
+            } catch (Exception ignored) { }
+
             // full products list for fallback in template
-            java.util.List<Product> laptops = java.util.Collections.emptyList();
+            java.util.List<Laptop> laptops = java.util.Collections.emptyList();
             try {
                 laptops = productRepository.findAll();
             } catch (Exception ignored) { }
@@ -200,10 +218,12 @@ public class AdminController {
             model.addAttribute("totalUsers", totalUsers);
             model.addAttribute("totalProducts", totalProducts);
             model.addAttribute("totalOrders", totalOrders);
+            model.addAttribute("totalMonitors", totalMonitors);
 
             model.addAttribute("totalKeyboards", totalKeyboards);
             model.addAttribute("recentProducts", recentProducts);
             model.addAttribute("recentKeyboards", recentKeyboards);
+            model.addAttribute("recentMonitors", recentMonitors);
             model.addAttribute("laptops", laptops);
         } catch (Exception ex) {
             // don't fail rendering; show an info box with the message
@@ -211,6 +231,7 @@ public class AdminController {
             model.addAttribute("totalUsers", 0);
             model.addAttribute("totalProducts", 0);
             model.addAttribute("totalOrders", 0);
+            model.addAttribute("totalMonitors", 0);
         }
 
         return "admin/admin-dashboard";
@@ -337,7 +358,7 @@ public class AdminController {
     // list keyboards
     @GetMapping("/keyboards")
     public String listKeyboards(Model model) {
-        List<Keyboard> keyboards = keyboardRepository.findAll();
+        List<Keyboard> keyboards = keyboardService.findAll();
         model.addAttribute("keyboards", keyboards);
         return "admin/admin-keyboards"; // create template admin-keyboards.html
     }
@@ -351,58 +372,44 @@ public class AdminController {
 
     // save new keyboard (from form)
     @PostMapping("/keyboards/save")
-    public String saveKeyboard(@ModelAttribute Keyboard keyboard,
+     public String saveKeyboard(@Valid @ModelAttribute Keyboard keyboard,
+                               BindingResult bindingResult,
                                @RequestParam(value = "image1File", required = false) MultipartFile image1File,
                                @RequestParam(value = "image2File", required = false) MultipartFile image2File,
                                @RequestParam(value = "image3File", required = false) MultipartFile image3File,
-                               RedirectAttributes redirectAttrs) {
+                               RedirectAttributes redirectAttrs,
+                               Model model) {
+        logger.info("Admin saveKeyboard called: brand={}, price={}, stock={}", keyboard.getBrand(), keyboard.getPrice(), keyboard.getStockQuantity());
         try {
-            // ensure uploads dir exists
-            Path uploadsDir = Paths.get(System.getProperty("user.dir"), "src", "main", "resources", "static", "uploads");
-            if (!Files.exists(uploadsDir)) {
-                Files.createDirectories(uploadsDir);
+            if (bindingResult.hasErrors()) {
+                logger.warn("Validation errors when saving keyboard: {}", bindingResult.getAllErrors());
+                // re-render form with errors so user can fix them
+                model.addAttribute("keyboard", keyboard);
+                return "admin/keyboard-form";
             }
 
-            // Image1
-            if (image1File != null && !image1File.isEmpty()) {
-                String p = saveUploadedFile(image1File, uploadsDir);
-                keyboard.setImage1(p);
-            }
-            // Image2
-            if (image2File != null && !image2File.isEmpty()) {
-                String p = saveUploadedFile(image2File, uploadsDir);
-                keyboard.setImage2(p);
-            }
-            // Image3
-            if (image3File != null && !image3File.isEmpty()) {
-                String p = saveUploadedFile(image3File, uploadsDir);
-                keyboard.setImage3(p);
-            }
+            // sanitize/prepare defaults
+            if (keyboard.getBrand() != null) keyboard.setBrand(keyboard.getBrand().trim());
+            if (keyboard.getPrice() == null) keyboard.setPrice(0.0);
+            if (keyboard.getStockQuantity() == null) keyboard.setStockQuantity(0);
 
-            keyboardRepository.save(keyboard);
+            Keyboard saved = keyboardService.saveKeyboard(keyboard, image1File, image2File, image3File);
+            logger.info("Keyboard saved with id={}", saved != null ? saved.getId() : null);
             redirectAttrs.addFlashAttribute("success", "Keyboard saved successfully");
             return "redirect:/admin/dashboard";
         } catch (Exception ex) {
-            redirectAttrs.addFlashAttribute("error", "Could not save keyboard: " + ex.getMessage());
-            return "redirect:/admin/keyboards";
+            logger.error("Could not save keyboard", ex);
+            // show error on the form page with original input
+            model.addAttribute("keyboard", keyboard);
+            model.addAttribute("errorMessage", "Could not save keyboard: " + ex.getMessage());
+            return "admin/keyboard-form";
         }
-    }
-
-    private String saveUploadedFile(MultipartFile file, Path uploadsDir) throws Exception {
-        String original = file.getOriginalFilename();
-        String safeName = System.currentTimeMillis() + "_" + (original != null ? original.replaceAll("[^a-zA-Z0-9._-]", "_") : "file");
-        Path dest = uploadsDir.resolve(safeName);
-        try (InputStream in = file.getInputStream()) {
-            Files.copy(in, dest, StandardCopyOption.REPLACE_EXISTING);
-        }
-        // return web-accessible path (assuming /static is served from root)
-        return "/uploads/" + safeName;
     }
 
     // show edit form
     @GetMapping("/keyboards/edit/{id}")
     public String showEditKeyboardForm(@PathVariable Long id, Model model, RedirectAttributes redirectAttrs) {
-        Optional<Keyboard> opt = keyboardRepository.findById(id);
+        Optional<Keyboard> opt = keyboardService.findById(id);
         if (opt.isEmpty()) {
             redirectAttrs.addFlashAttribute("error", "Keyboard not found");
             return "redirect:/admin/keyboards";
@@ -414,19 +421,69 @@ public class AdminController {
     // delete keyboard
     @PostMapping("/keyboards/delete/{id}")
     public String deleteKeyboard(@PathVariable Long id, RedirectAttributes redirectAttrs) {
-        Optional<Keyboard> opt = keyboardRepository.findById(id);
-        if (opt.isEmpty()) {
-            redirectAttrs.addFlashAttribute("error", "Keyboard not found");
-            return "redirect:/admin/keyboards";
+        try {
+            keyboardService.deleteById(id);
+            redirectAttrs.addFlashAttribute("success", "Keyboard deleted");
+        } catch (Exception ex) {
+            redirectAttrs.addFlashAttribute("error", "Could not delete keyboard: " + ex.getMessage());
         }
-        Keyboard k = opt.get();
-        // remove image files if present
-        deletePhysicalFile(k.getImage1());
-        deletePhysicalFile(k.getImage2());
-        deletePhysicalFile(k.getImage3());
-
-        keyboardRepository.deleteById(id);
-        redirectAttrs.addFlashAttribute("success", "Keyboard deleted");
         return "redirect:/admin/keyboards";
+    }
+
+    // --- MONITOR MANAGEMENT (Admin UI) ---
+    @GetMapping("/monitors")
+    public String listMonitors(Model model) {
+        List<Monitor> monitors = monitorService.findAll();
+        model.addAttribute("monitors", monitors);
+        return "admin/admin-monitors";
+    }
+
+    @GetMapping("/monitors/add")
+    public String showAddMonitorForm(Model model) {
+        model.addAttribute("monitor", new Monitor());
+        return "admin/monitor-form";
+    }
+
+    @PostMapping("/monitors/save")
+    public String saveMonitor(@Valid @ModelAttribute Monitor monitor,
+                              BindingResult bindingResult,
+                              @RequestParam(value = "image1File", required = false) MultipartFile image1File,
+                              @RequestParam(value = "image2File", required = false) MultipartFile image2File,
+                              @RequestParam(value = "image3File", required = false) MultipartFile image3File,
+                              RedirectAttributes redirectAttrs,
+                              Model model) {
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("monitor", monitor);
+            return "admin/monitor-form";
+        }
+        if (monitor.getPrice() == null) monitor.setPrice(0.0);
+        if (monitor.getStockQuantity() == null) monitor.setStockQuantity(0);
+        try {
+            monitorService.saveWithImages(monitor, image1File, image2File, image3File);
+            redirectAttrs.addFlashAttribute("success", "Monitor saved successfully");
+            return "redirect:/admin/dashboard";
+        } catch (Exception ex) {
+            model.addAttribute("monitor", monitor);
+            model.addAttribute("errorMessage", "Could not save monitor: " + ex.getMessage());
+            return "admin/monitor-form";
+        }
+    }
+
+    @GetMapping("/monitors/edit/{id}")
+    public String showEditMonitorForm(@PathVariable Long id, Model model, RedirectAttributes redirectAttrs) {
+        Optional<Monitor> opt = monitorService.findById(id);
+        if (opt.isEmpty()) {
+            redirectAttrs.addFlashAttribute("error", "Monitor not found");
+            return "redirect:/admin/monitors";
+        }
+        model.addAttribute("monitor", opt.get());
+        return "admin/monitor-form";
+    }
+
+    @PostMapping("/monitors/delete/{id}")
+    public String deleteMonitor(@PathVariable Long id, RedirectAttributes redirectAttrs) {
+        monitorService.deleteById(id);
+        redirectAttrs.addFlashAttribute("success", "Monitor deleted");
+        return "redirect:/admin/monitors";
     }
 }

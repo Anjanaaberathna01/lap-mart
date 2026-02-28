@@ -30,7 +30,7 @@ public class SecurityConfig {
 
                         // 2. ADMIN ONLY
                         // Ensure your DB 'role' column values are exactly "ROLE_ADMIN"
-                        .requestMatchers("/admin/**", "/api/admin/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/admin/**", "/api/admin/**").hasAnyAuthority("ROLE_ADMIN", "ADMIN")
 
                         // 3. LOGGED-IN USERS (Products/Cart/etc)
                         .requestMatchers("/products/**").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN")

@@ -4,7 +4,7 @@
         import com.lapmart.lap_mart.model.CartItem;
         import com.lapmart.lap_mart.model.Order;
         import com.lapmart.lap_mart.model.OrderItem;
-        import com.lapmart.lap_mart.model.Product;
+        import com.lapmart.lap_mart.model.Laptop;
         import com.lapmart.lap_mart.model.User;
         import com.lapmart.lap_mart.repository.OrderRepository;
         import org.springframework.beans.factory.annotation.Autowired;
@@ -49,7 +49,7 @@
 
                 BigDecimal total = BigDecimal.ZERO;
                 for (CartItem ci : cartItems) {
-                    Product p = ci.getProduct();
+                    Laptop p = ci.getProduct();
                     BigDecimal unit = BigDecimal.valueOf(p.getPrice());
                     int qty = ci.getQuantity();
                     OrderItem oi = new OrderItem(p.getId(), p.getBrand() + " " + p.getModelName(), unit, qty);

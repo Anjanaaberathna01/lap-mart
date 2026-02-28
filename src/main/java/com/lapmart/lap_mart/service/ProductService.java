@@ -1,6 +1,6 @@
 package com.lapmart.lap_mart.service;
 
-import com.lapmart.lap_mart.model.Product;
+import com.lapmart.lap_mart.model.Laptop;
 import com.lapmart.lap_mart.repository.ProductRepository;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -14,11 +14,11 @@ public class ProductService {
         this.productRepository = productRepository;
     }
 
-    public List<Product> getAllLaptops() {
+    public List<Laptop> getAllLaptops() {
         return productRepository.findAll();
     }
 
-    public Product getLaptopById(Long id) {
+    public Laptop getLaptopById(Long id) {
         return productRepository.findById(id).orElse(null);
     }
 }

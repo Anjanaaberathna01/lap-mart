@@ -5,11 +5,10 @@ spring:
     username: root
     password:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    servlet:
-      multipart:
-        max-file-size: 5MB
-        max-request-size: 5MB
-
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
 
   jpa:
     hibernate:
@@ -20,4 +19,5 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
 server:
     port: 8081
-
+    tomcat:
+      max-part-count: 50

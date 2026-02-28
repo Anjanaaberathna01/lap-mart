@@ -1,8 +1,7 @@
-
 package com.lapmart.lap_mart.repository;
 
 import com.lapmart.lap_mart.model.CartItem;
-import com.lapmart.lap_mart.model.Product;
+import com.lapmart.lap_mart.model.Laptop;
 import com.lapmart.lap_mart.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -16,7 +15,7 @@ public interface CartRepository extends JpaRepository<CartItem, Long> {
     Optional<CartItem> findByUserAndProductId(User user, Long productId);
 
     // added: supports CartService.findByUserAndProduct(user, product)
-    Optional<CartItem> findByUserAndProduct(User user, Product product);
+    Optional<CartItem> findByUserAndProduct(User user, Laptop product);
 
     void deleteByUser(User user);
 }

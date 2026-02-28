@@ -21,6 +21,7 @@
             <th>ID</th>
             <th>Brand</th>
             <th>Price</th>
+            <th>Stock Quantity</th>
             <th>Image</th>
             <th>Actions</th>
         </tr>
@@ -30,6 +31,7 @@
             <td th:text="${k.id}">1</td>
             <td th:text="${k.brand}">Brand</td>
             <td th:text="${#numbers.formatDecimal(k.price, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+            <td th:text="${k.stockQuantity}">0</td>
             <td>
                 <img th:if="${k.image1 != null}" th:src="${k.image1}" width="80" class="img-thumbnail" alt="Keyboard Image" />
                 <span th:if="${k.image1 == null}" class="text-muted">No Image</span>

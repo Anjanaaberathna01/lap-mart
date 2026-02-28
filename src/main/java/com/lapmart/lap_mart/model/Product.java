@@ -1,33 +1,10 @@
 package com.lapmart.lap_mart.model;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
-
-@Entity
-@Data
-@Table(name = "products")
-public class Product {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-
-    private Long id;
-
-    @NotBlank(message = "Product name is mandatory")
-    private String brand;
-
-    @NotBlank(message = "Product Name is mandatory")
-    private String modelName;
-
-    private String processor;
-    private String ramSize;
-
-    @Min(value = 0, message = "Price must be non-negative")
-    private double price;
-    private Integer stockQuantity;
-    private String imageUrl1;
-    private String imageUrl2;
-    private String imageUrl3;
-
+/**
+ * Compatibility adapter: older code may import `Product`. We keep a small class
+ * named Product that extends the new `Laptop` entity so both names work
+ * without duplicating JPA entity definitions.
+ */
+public class Product extends Laptop {
+    // empty - inherits all fields from Laptop
 }

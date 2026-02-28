@@ -3,11 +3,12 @@ package com.lapmart.lap_mart.model;
 import jakarta.persistence.*;
 import lombok.Data;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Min;
 
 @Entity
 @Data
-@Table(name = "keyboards")
-public class Keyboard {
+@Table(name = "monitors")
+public class Monitor {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -16,14 +17,12 @@ public class Keyboard {
     @NotBlank(message = "Brand is required")
     private String brand;
 
-    // allow null to avoid binding errors when form input is empty
+    @Min(value = 0, message = "Price must be non-negative")
     private Double price;
+
+    private Integer stockQuantity;
 
     private String image1;
     private String image2;
     private String image3;
-
-    // how many items are in stock for this keyboard
-    private Integer stockQuantity;
-
 }

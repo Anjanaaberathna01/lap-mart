@@ -1,6 +1,6 @@
 package com.lapmart.lap_mart.controller;
 
-import com.lapmart.lap_mart.model.Product;
+import com.lapmart.lap_mart.model.Laptop;
 import com.lapmart.lap_mart.repository.ProductRepository;
 import com.lapmart.lap_mart.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +8,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,7 +25,7 @@ public class AdminWebController {
     // View List
     @GetMapping
     public String listProducts(Model model) {
-        List<Product> laptops = productRepository.findAll();
+        List<Laptop> laptops = productRepository.findAll();
         model.addAttribute("laptops", laptops);
         // Add counts so the admin products page can show dashboard badges
         try {
@@ -45,19 +46,20 @@ public class AdminWebController {
 
     @GetMapping("/add")
     public String showAddForm(Model model) {
-        model.addAttribute("product", new Product());
+        model.addAttribute("product", new Laptop());
         return "product-form"; // product-form.html
     }
 
     @PostMapping("/save")
-    public String saveProduct(@ModelAttribute("product") Product product,
+    public String saveProduct(@ModelAttribute("product") Laptop product,
                               @RequestParam("file1") MultipartFile file1,
                               @RequestParam("file2") MultipartFile file2,
-                              @RequestParam("file3") MultipartFile file3) {
+                              @RequestParam("file3") MultipartFile file3,
+                              RedirectAttributes redirectAttrs) {
         try {
             // Check if we are EDITING an existing product
             if (product.getId() != null) {
-                Product existingProduct = productRepository.findById(product.getId())
+                Laptop existingProduct = productRepository.findById(product.getId())
                         .orElseThrow(() -> new RuntimeException("Product not found"));
 
                 // If a new file is uploaded, save it. Otherwise, keep the OLD image path.
@@ -77,18 +79,20 @@ public class AdminWebController {
 
             // Because 'product' now has the ID, this will perform an UPDATE
             productRepository.save(product);
+            redirectAttrs.addFlashAttribute("success", "Laptop saved successfully");
 
         } catch (IOException e) {
             e.printStackTrace();
+            redirectAttrs.addFlashAttribute("error", "Could not save laptop: " + e.getMessage());
             return "redirect:/admin/products/add?error";
         }
-        return "redirect:/admin/products";
+        return "redirect:/admin/dashboard";
     }
 
     // 4. Delete Product & Physical Files
     @GetMapping("/delete/{id}")
     public String deleteProduct(@PathVariable Long id) {
-        Product product = productRepository.findById(id)
+        Laptop product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
         // Remove files from disk first
@@ -124,7 +128,7 @@ public class AdminWebController {
     }
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable Long id, Model model) {
-        Product product = productRepository.findById(id)
+        Laptop product = productRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid product Id:" + id));
 
         model.addAttribute("product", product);
