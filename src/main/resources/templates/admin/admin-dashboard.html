@@ -62,6 +62,16 @@
             </div>
         </div>
     </div>
+
+    <div class="col-md-3">
+        <div class="card bg-dark text-white shadow">
+            <div class="card-body text-center">
+                <h5 class="card-title">Mice</h5>
+                <h2 class="display-4" th:text="${totalMice ?: 0}">0</h2>
+                <a th:href="@{/admin/mice}" class="btn btn-light btn-sm mt-2">Manage Mice</a>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Recent Products preview -->
@@ -216,6 +226,42 @@
                 <td th:text="${m.stockQuantity}">0</td>
                 <td>
                     <img th:if="${m.image1 != null}" th:src="${m.image1}" width="80" class="img-thumbnail" alt="Monitor Image" />
+                    <span th:if="${m.image1 == null}" class="text-muted">No Image</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Recent Mice preview -->
+<div class="mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h4>Recent Mice (last 5)</h4>
+        <a th:href="@{/admin/mice}" class="btn btn-sm btn-primary">View All Mice</a>
+    </div>
+
+    <div th:if="${#lists.isEmpty(recentMice)}">
+        <div class="alert alert-info">No mice found.</div>
+    </div>
+
+    <div th:if="${!#lists.isEmpty(recentMice)}">
+        <table class="table table-sm table-striped">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Brand</th>
+                <th>Price</th>
+                <th>Image</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="m : ${ (recentMice.size() > 5) ? recentMice.subList(recentMice.size() - 5, recentMice.size()) : recentMice }">
+                <td th:text="${m.id}">1</td>
+                <td th:text="${m.brand}">Brand</td>
+                <td th:text="${#numbers.formatDecimal(m.price, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                <td>
+                    <img th:if="${m.image1 != null}" th:src="${m.image1}" width="80" class="img-thumbnail" alt="Mouse Image" />
                     <span th:if="${m.image1 == null}" class="text-muted">No Image</span>
                 </td>
             </tr>

@@ -12,6 +12,8 @@ import com.lapmart.lap_mart.repository.KeyboardRepository;
 import com.lapmart.lap_mart.service.KeyboardService;
 import com.lapmart.lap_mart.model.Monitor;
 import com.lapmart.lap_mart.service.MonitorService;
+import com.lapmart.lap_mart.model.Mouse;
+import com.lapmart.lap_mart.service.MouseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.PageRequest;
@@ -62,6 +64,9 @@ public class AdminController {
 
     @Autowired
     private MonitorService monitorService;
+
+    @Autowired
+    private MouseService mouseService;
 
     // --- PRODUCT MANAGEMENT ---
 
@@ -189,6 +194,7 @@ public class AdminController {
             long totalProducts = productRepository.count();
             long totalOrders = orderRepository.count();
             long totalMonitors = monitorService.count();
+            long totalMice = mouseService.count();
 
             // keyboards counts and recent lists
             long totalKeyboards = keyboardRepository.count();
@@ -197,6 +203,7 @@ public class AdminController {
             java.util.List<Laptop> recentProducts = java.util.Collections.emptyList();
             java.util.List<Keyboard> recentKeyboards = java.util.Collections.emptyList();
             java.util.List<Monitor> recentMonitors = java.util.Collections.emptyList();
+            java.util.List<Mouse> recentMice = java.util.Collections.emptyList();
             try {
                 recentProducts = productRepository.findAll(PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "id"))).getContent();
             } catch (Exception ignored) { }
@@ -209,6 +216,10 @@ public class AdminController {
                 recentMonitors = monitorService.findTop5();
             } catch (Exception ignored) { }
 
+            try {
+                recentMice = mouseService.findTop5();
+            } catch (Exception ignored) { }
+
             // full products list for fallback in template
             java.util.List<Laptop> laptops = java.util.Collections.emptyList();
             try {
@@ -219,11 +230,13 @@ public class AdminController {
             model.addAttribute("totalProducts", totalProducts);
             model.addAttribute("totalOrders", totalOrders);
             model.addAttribute("totalMonitors", totalMonitors);
+            model.addAttribute("totalMice", totalMice);
 
             model.addAttribute("totalKeyboards", totalKeyboards);
             model.addAttribute("recentProducts", recentProducts);
             model.addAttribute("recentKeyboards", recentKeyboards);
             model.addAttribute("recentMonitors", recentMonitors);
+            model.addAttribute("recentMice", recentMice);
             model.addAttribute("laptops", laptops);
         } catch (Exception ex) {
             // don't fail rendering; show an info box with the message
@@ -232,6 +245,7 @@ public class AdminController {
             model.addAttribute("totalProducts", 0);
             model.addAttribute("totalOrders", 0);
             model.addAttribute("totalMonitors", 0);
+            model.addAttribute("totalMice", 0);
         }
 
         return "admin/admin-dashboard";
@@ -485,5 +499,61 @@ public class AdminController {
         monitorService.deleteById(id);
         redirectAttrs.addFlashAttribute("success", "Monitor deleted");
         return "redirect:/admin/monitors";
+    }
+
+    // --- MOUSE MANAGEMENT (Admin UI) ---
+    @GetMapping("/mice")
+    public String listMice(Model model) {
+        List<Mouse> mice = mouseService.findAll();
+        model.addAttribute("mice", mice);
+        return "admin/admin-mice";
+    }
+
+    @GetMapping("/mice/add")
+    public String showAddMouseForm(Model model) {
+        model.addAttribute("mouse", new Mouse());
+        return "admin/mouse-form";
+    }
+
+    @PostMapping("/mice/save")
+    public String saveMouse(@Valid @ModelAttribute Mouse mouse,
+                            BindingResult bindingResult,
+                            @RequestParam(value = "image1File", required = false) MultipartFile image1File,
+                            @RequestParam(value = "image2File", required = false) MultipartFile image2File,
+                            @RequestParam(value = "image3File", required = false) MultipartFile image3File,
+                            RedirectAttributes redirectAttrs,
+                            Model model) {
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("mouse", mouse);
+            return "admin/mouse-form";
+        }
+        if (mouse.getPrice() == null) mouse.setPrice(0.0);
+        try {
+            mouseService.saveWithImages(mouse, image1File, image2File, image3File);
+            redirectAttrs.addFlashAttribute("success", "Mouse saved successfully");
+            return "redirect:/admin/dashboard";
+        } catch (Exception ex) {
+            model.addAttribute("mouse", mouse);
+            model.addAttribute("errorMessage", "Could not save mouse: " + ex.getMessage());
+            return "admin/mouse-form";
+        }
+    }
+
+    @GetMapping("/mice/edit/{id}")
+    public String showEditMouseForm(@PathVariable Long id, Model model, RedirectAttributes redirectAttrs) {
+        Optional<Mouse> opt = mouseService.findById(id);
+        if (opt.isEmpty()) {
+            redirectAttrs.addFlashAttribute("error", "Mouse not found");
+            return "redirect:/admin/mice";
+        }
+        model.addAttribute("mouse", opt.get());
+        return "admin/mouse-form";
+    }
+
+    @PostMapping("/mice/delete/{id}")
+    public String deleteMouse(@PathVariable Long id, RedirectAttributes redirectAttrs) {
+        mouseService.deleteById(id);
+        redirectAttrs.addFlashAttribute("success", "Mouse deleted");
+        return "redirect:/admin/mice";
     }
 }
